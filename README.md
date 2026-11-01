@@ -81,16 +81,35 @@ The database is seeded on first request with the 13 default categories, sample p
 
 ### Supabase (database, RLS)
 
-The project runs on any PostgreSQL database, including Supabase. After `drizzle-kit push`, run
-`supabase/rls.sql` in the Supabase SQL editor. It:
+The repository is ready for the **Supabase GitHub integration**:
 
+| File | Purpose |
+|---|---|
+| `supabase/config.toml` | Supabase project config (needed by the integration) |
+| `supabase/migrations/20261102000000_initial_schema.sql` | Creates all 12 tables |
+| `supabase/migrations/20261102000100_row_level_security.sql` | Turns on Row Level Security and adds the access policies |
+
+**Set up the integration** (Supabase dashboard → Project Settings → Integrations → GitHub):
+1. Connect `igwechris200/igwechris200-House-of-b-wears`.
+2. **Working directory:** `.` (the repository root, where the `supabase/` folder is).
+3. **Production branch:** `main`, with **Deploy to production** turned on.
+
+Supabase runs new migration files when they reach `main`. If the integration was connected before these
+files were pushed, it may not run them for that push; you can then paste both files, in order, into the
+**SQL editor** instead. Don't run `drizzle-kit push` against Supabase as well; the migrations already create the tables.
+
+**Connect the app** by setting `DATABASE_URL` on your host to the Supabase connection string
+(Project Settings → Database → Connect). Use the **Session pooler** string (IPv4, port 5432) unless your
+host supports IPv6. SSL is turned on automatically for non-local databases (`src/db/index.ts`).
+
+The Row Level Security migration:
 - enables Row Level Security on every table;
 - lets the public anon key read only published products, active categories and store settings;
 - gives full access to signed-in users whose email matches an `admin` user (`public.is_admin()`);
 - revokes direct write access for anon and authenticated roles.
 
 The server connects with `DATABASE_URL` (a privileged role that bypasses RLS) and enforces admin
-checks in code. Do not put the service-role or database password in any `NEXT_PUBLIC_*` variable.
+checks in code. Do not put the service-role key or database password in any `NEXT_PUBLIC_*` variable.
 
 > **Supabase Auth status:** the admin and customer sign-in in this build uses the app's own
 > hashed-password sessions (httpOnly cookie, role check on every request). Switching sign-in to
@@ -117,7 +136,7 @@ underpayment rejection; dashboard, report and inventory figures. It removes all 
 - Passwords hashed with scrypt. Sessions are random tokens stored server-side (httpOnly cookie, 30 days).
 - Role-based access: the admin layout and every admin server action call `assertAdmin()`. Uploads are admin-only.
 - Secrets are read only from server environment variables and are never sent to the browser.
-- Row Level Security policies in `supabase/rls.sql` protect the public API surface.
+- Row Level Security policies in `supabase/migrations/20261102000100_row_level_security.sql` protect the public API surface.
 - The admin login page does not display credentials.
 
 ---

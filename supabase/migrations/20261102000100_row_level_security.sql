@@ -1,8 +1,8 @@
 -- ============================================================================
 -- Row Level Security for the Men's Fashion store (Supabase / PostgreSQL)
 -- ----------------------------------------------------------------------------
--- Apply in the Supabase SQL editor (or: psql "$DATABASE_URL" -f supabase/rls.sql)
--- AFTER `npx drizzle-kit push`.
+-- Applied after 20261102000000_initial_schema.sql by the Supabase GitHub integration
+-- (or paste into the Supabase SQL editor after the schema migration).
 --
 -- How access works
 --   * The Next.js server connects with DATABASE_URL (a privileged role that
