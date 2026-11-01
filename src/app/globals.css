@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+/*
+ * Theme: green + white, with a warm yellow accent.
+ * "brand" is the main green, "accent" is the yellow used for sale badges and
+ * key call-to-action buttons. "black" and "ink" are overridden to deep greens
+ * so the existing components pick up the new colours automatically.
+ */
+@theme {
+  --color-brand-50: #eefaf3;
+  --color-brand-100: #d5f3e1;
+  --color-brand-200: #aae6c4;
+  --color-brand-300: #6fd49b;
+  --color-brand-400: #34b872;
+  --color-brand-500: #0c9150;
+  --color-brand-600: #087a43;
+  --color-brand-700: #076236;
+  --color-brand-800: #084e2c;
+  --color-brand-900: #063c23;
+  --color-brand-950: #04261a;
+
+  --color-accent-50: #fffbea;
+  --color-accent-100: #fff4c2;
+  --color-accent-200: #ffe886;
+  --color-accent-300: #ffdb4d;
+  --color-accent-400: #ffc90f;
+  --color-accent-500: #f5b400;
+  --color-accent-600: #d69700;
+  --color-accent-700: #a87300;
+
+  --color-black: #0b2a1b;
+  --color-ink: #05190f;
+
+  --font-serif: var(--font-sans);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --animate-fade-up: fade-up 0.6s ease-out both;
+  --animate-fade-in: fade-in 0.5s ease-out both;
+  --animate-slide-in: slide-in 0.6s ease-out both;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Headings use a bold sans-serif for a clean, marketplace look */
+.font-serif {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.brand-text {
+  background: linear-gradient(120deg, #ffe886 0%, #ffffff 45%, #ffc90f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 py-3 text-sm font-semibold tracking-wide text-white transition-all duration-300 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+}
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg border border-brand-500 px-6 py-3 text-sm font-semibold tracking-wide text-brand-700 transition-all duration-300 hover:bg-brand-500 hover:text-white active:scale-[0.98] disabled:opacity-50;
+}
+.btn-gold {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg bg-accent-400 px-6 py-3 text-sm font-bold tracking-wide text-black transition-all duration-300 hover:bg-accent-500 hover:shadow-lg hover:shadow-accent-500/30 active:scale-[0.98] disabled:opacity-50;
+}
+.input {
+  @apply w-full rounded-lg border border-neutral-300 bg-white px-4 py-3 text-sm text-black outline-none transition placeholder:text-neutral-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25;
+}
+.label {
+  @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-600;
+}
+.card {
+  @apply rounded-2xl border border-neutral-200 bg-white shadow-sm;
+}
+.eyebrow {
+  @apply text-xs font-bold uppercase tracking-[0.2em] text-brand-600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
