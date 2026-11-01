@@ -11,7 +11,19 @@ and **Tailwind CSS**. Business name, logo and contact details are editable from 
 The repo has already been prepared — a `.gitignore` is in place and `.env` (which holds your
 database credentials) is **excluded from version control**, so no secrets get committed.
 
-Create an empty repository on GitHub (no README, no `.gitignore`, no licence), then run:
+### If you already have a repository (recommended)
+
+One command handles both an empty repo and one that already has commits — it merges any existing
+history first instead of being rejected, and never force-pushes:
+
+```bash
+node scripts/push-to-github.mjs https://github.com/<your-username>/<your-repo>.git
+```
+
+Where the remote already had commits, the original history is preserved and this project's files
+win wherever the same file conflicted.
+
+### If you are starting from a brand-new empty repository
 
 ```bash
 git remote add origin https://github.com/<your-username>/<your-repo>.git

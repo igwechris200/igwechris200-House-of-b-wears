@@ -33,10 +33,30 @@ if (existsSync(".env")) {
 
 const SAFE_BRANCH = "main";
 
+// A merge commit needs an identity. Use the repo's, or fall back to a neutral
+// local identity so the script works in a fresh clone with no global config.
+const ident = (() => {
+  const name = run0(["config", "user.name"]) || "House of B'Wears";
+  const email = run0(["config", "user.email"]) || "owner@houseofbwears.ng";
+  return { name, email };
+})();
+
+function run0(parts) {
+  try {
+    return execFileSync("git", parts, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 function run(args, label, allowFail = false) {
   const parts = Array.isArray(args) ? args : args.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
   try {
-    const out = execFileSync("git", parts, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    const out = execFileSync("git", parts, {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, GIT_AUTHOR_NAME: ident.name, GIT_AUTHOR_EMAIL: ident.email, GIT_COMMITTER_NAME: ident.name, GIT_COMMITTER_EMAIL: ident.email },
+    });
     process.stdout.write(out);
     return { ok: true, out };
   } catch (err) {
@@ -72,6 +92,7 @@ if (branch !== SAFE_BRANCH) {
 if (run(["status", "--porcelain"], "check working tree", true).out.trim()) {
   run(["add", "-A"], "stage changes");
   run(["commit", "-m", "Commit local changes before pushing"], "commit changes", true);
+  console.log("✓ Committed uncommitted local changes");
   console.log("✓ Committed uncommitted local changes");
 }
 
@@ -116,7 +137,14 @@ const upToDate = mergeBase.ok && mergeBase.out.trim() === remoteHead.out.trim();
 if (upToDate) {
   console.log("  Remote is already up to date — pushing.\n");
 } else {
-  const merge = run(["merge", `origin/${SAFE_BRANCH}`, "-X", "ours", "-m", "Merge existing GitHub history"], "merge remote history", true);
+  // --allow-unrelated-histories is required when the remote was created
+  // independently on GitHub (e.g. it only has an auto-generated README).
+  // -X ours keeps this project's files wherever the same path conflicts.
+  const merge = run(
+    ["merge", `origin/${SAFE_BRANCH}`, "--allow-unrelated-histories", "-X", "ours", "-m", "Merge existing GitHub history"],
+    "merge remote history",
+    true,
+  );
   if (!merge.ok) {
     console.error(
       `\n✗ Merge failed.\n\n` +
