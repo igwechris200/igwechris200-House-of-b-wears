@@ -160,10 +160,18 @@ The password must be at least 10 characters. This signs out all active sessions 
 The database is seeded on first request with the 13 default categories, sample products, and the
 `WELCOME10` and `NAIJA5K` discount codes.
 
-### Supabase (database, RLS)
+### Supabase (database, storage, RLS)
 
-The project runs on any PostgreSQL database, including Supabase. After `drizzle-kit push`, run
-`supabase/rls.sql` in the Supabase SQL editor. It:
+The project runs on any PostgreSQL database, including Supabase. To connect your Supabase project:
+
+**1. Database.** Supabase → **Project Settings → Database → Connection string → URI**. Copy it into
+`DATABASE_URL` in `.env` (use the connection-pooling URI on serverless hosts), then apply the schema:
+
+```bash
+npx drizzle-kit push
+```
+
+**2. Row Level Security.** In the Supabase **SQL Editor**, run the contents of `supabase/rls.sql`. It:
 
 - enables Row Level Security on every table;
 - lets the public anon key read only published products, active categories and store settings;
@@ -172,6 +180,20 @@ The project runs on any PostgreSQL database, including Supabase. After `drizzle-
 
 The server connects with `DATABASE_URL` (a privileged role that bypasses RLS) and enforces admin
 checks in code. Do not put the service-role or database password in any `NEXT_PUBLIC_*` variable.
+
+**3. Image storage (recommended for production).** Uploaded product photos are stored on the
+server's local disk by default, which is lost on redeploy. To store them permanently in Supabase
+Storage, set these in `.env`:
+
+```
+SUPABASE_URL=https://<your-project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<from Project Settings → API>
+SUPABASE_STORAGE_BUCKET=product-images
+```
+
+The bucket is created automatically on the first upload if it does not exist, and images are then
+served from Supabase's CDN. The service role key is read only on the server and never sent to the
+browser. Store Settings shows which storage backend is currently active.
 
 > **Supabase Auth status:** the admin and customer sign-in in this build uses the app's own
 > hashed-password sessions (httpOnly cookie, role check on every request). Switching sign-in to

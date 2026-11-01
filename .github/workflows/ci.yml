@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Typecheck, build & test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/app_db
+      # No Paystack key in CI — payment paths that need one are expected to
+      # fail closed, which the admin test suite asserts.
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply database schema
+        run: npx drizzle-kit push
+
+      - name: Generate route types
+        run: npx next typegen
+
+      - name: TypeScript check
+        run: npm exec tsc -- --noEmit --pretty false
+
+      - name: Production build
+        run: npm run build
+
+      - name: Admin dashboard business-logic tests
+        run: node scripts/run-admin-tests.mjs
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
