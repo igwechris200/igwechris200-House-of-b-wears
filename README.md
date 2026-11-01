@@ -164,12 +164,20 @@ The database is seeded on first request with the 13 default categories, sample p
 
 The project runs on any PostgreSQL database, including Supabase. To connect your Supabase project:
 
-**1. Database.** Supabase → **Project Settings → Database → Connection string → URI**. Copy it into
-`DATABASE_URL` in `.env` (use the connection-pooling URI on serverless hosts), then apply the schema:
+**1. Database.** Run the connection script with your connection string from
+Supabase → **Project Settings → Database → Connection string → URI**:
 
 ```bash
-npx drizzle-kit push
+node scripts/connect-supabase.mjs "postgresql://..." --migrate-data
 ```
+
+It validates the string, tests the connection, applies the schema, copies your existing
+products/categories/orders across, applies Row Level Security, verifies the tables, and points
+`.env` at the new database. It only ever inserts (never deletes), so re-running it is safe.
+
+Omit `--migrate-data` for an empty database. Use the connection-pooling URI on serverless hosts.
+
+To apply the schema manually instead: `npx drizzle-kit push`.
 
 **2. Row Level Security.** In the Supabase **SQL Editor**, run the contents of `supabase/rls.sql`. It:
 
