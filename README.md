@@ -11,13 +11,21 @@ and **Tailwind CSS**. Business name, logo and contact details are editable from 
 The repo has already been prepared — a `.gitignore` is in place and `.env` (which holds your
 database credentials) is **excluded from version control**, so no secrets get committed.
 
-### If you already have a repository (recommended)
-
-One command handles both an empty repo and one that already has commits — it merges any existing
-history first instead of being rejected, and never force-pushes:
+### This project's repository
 
 ```bash
-node scripts/push-to-github.mjs https://github.com/<your-username>/<your-repo>.git
+node scripts/push-to-github.mjs https://github.com/igwechris200/igwechris200-House-of-b-wears.git
+```
+
+Cloning it back down:
+
+```bash
+git clone https://github.com/igwechris200/igwechris200-House-of-b-wears.git
+cd igwechris200-House-of-b-wears
+cp .env.example .env   # then fill in your own values
+npm ci
+npx drizzle-kit push
+npm run build && npm start
 ```
 
 Where the remote already had commits, the original history is preserved and this project's files
