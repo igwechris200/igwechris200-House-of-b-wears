@@ -156,16 +156,34 @@ On first start, the app seeds the default categories and sample products, and cr
 
 > `drizzle.config.json` currently points at the local database URL. If you use a hosted database, update `dbCredentials.url` there (or run `drizzle-kit push` with that config pointing at your `DATABASE_URL`).
 
-## Deploying to production
+## Deploying to Vercel (with your Supabase database)
 
-1. Create a PostgreSQL database (Supabase, Neon, Railway or Render) and copy its connection string.
-2. Deploy the repo to a Node host (Vercel, Render, Railway or a VPS) and set the environment variables from `.env.example`.
-3. Run `npx drizzle-kit push` once against the production database.
-4. In Paystack, set the webhook URL to `https://<your-domain>/api/paystack/webhook`.
-5. Sign in at `/admin/login` and change the admin password in **Store Settings**.
+The database tables already exist in Supabase, and Supabase is the only place your store data lives.
+Vercel just runs the website and connects to it.
+
+1. **Import the repo:** Vercel → **Add New → Project** → import `igwechris200/igwechris200-House-of-b-wears`.
+   Framework: Next.js (detected). Leave the build settings as they are.
+2. **Add environment variables** (Project → Settings → Environment Variables, for **Production** and **Preview**):
+
+   | Variable | Required | Value |
+   |---|---|---|
+   | `DATABASE_URL` | **Yes** | Supabase → **Connect** → **Transaction pooler** string (port **6543**), with your real database password |
+   | `NEXT_PUBLIC_SITE_URL` | For payments | Your live address, e.g. `https://house-of-bwears.vercel.app` |
+   | `PAYSTACK_SECRET_KEY` | For payments | Paystack secret key (server only) |
+   | `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | Optional | Paystack public key |
+   | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | No | Only used if no admin exists. Your Supabase database already has one |
+
+   If your password has special characters such as `@`, `#` or `%`, they must be URL-encoded in
+   `DATABASE_URL` (`@` → `%40`, `#` → `%23`, `%` → `%25`).
+3. **Deploy.** `vercel.json` runs the site in Dublin (`dub1`), next to the Supabase database in `eu-west-1`.
+4. **Paystack:** set the webhook URL to `https://<your-domain>/api/paystack/webhook`.
+5. **Sign in** at `/admin/login` and change the admin password in **Store Settings** straight away.
+
+Do **not** run `npx drizzle-kit push` against Supabase: the tables and access rules are managed by
+`supabase/migrations/`, and a push could undo the Row Level Security settings.
 
 ### Important: product image uploads
-Admin-uploaded images are saved to the local `uploads/` folder. That works on a VPS or a host with a persistent disk. **Serverless hosts like Vercel delete local files**, so there you need object storage (for example Supabase Storage, Cloudinary or S3) before relying on uploads. Pasting image URLs in the product form works everywhere.
+Admin-uploaded images are saved to the local `uploads/` folder. That works on a VPS or a host with a persistent disk. **On Vercel the disk is read-only**, so the upload box shows a message asking for an image link instead. Pasting image URLs in the product and category forms works everywhere. To upload from your phone or computer on Vercel, the next step is connecting Supabase Storage (needs your Supabase project URL and service key).
 
 ### Preview-only session fallback
-`src/lib/auth.ts` has a cookie-less session fallback that is **only** enabled when `E2B_SANDBOX=true` (the hosted preview iframe, where browsers block cookies). Never set that variable in production: every request on your real site must carry its own valid session cookie.
+`src/lib/auth.ts` has a cookie-less session fallback that is **only** enabled inside the hosted preview sandbox (`E2B_SANDBOX=true`) **and** only while it uses its own local database. It is always off on Vercel and whenever the database is Supabase, so every request on your real site must carry its own valid session cookie.

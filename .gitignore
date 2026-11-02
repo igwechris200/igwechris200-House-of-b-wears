@@ -28,3 +28,6 @@ yarn-error.log*
 # editors
 .vscode/
 .idea/
+
+# local backups of the Supabase database (contain customer data)
+.supabase-backup/

@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { ensureSeeded } from "@/lib/seed";
 
-process.env.__NEXT_PRIVATE_ORIGIN ??= "http://127.0.0.1:3000";
+if (process.env.E2B_SANDBOX === "true") process.env.__NEXT_PRIVATE_ORIGIN ??= "http://127.0.0.1:3000";
 
 /**
  * The hosted preview runs inside a cross-site iframe where browsers often block
@@ -16,7 +16,8 @@ process.env.__NEXT_PRIVATE_ORIGIN ??= "http://127.0.0.1:3000";
  * On a real deployment (Vercel, Render, VPS…) E2B_SANDBOX is unset, so these
  * fallbacks are OFF and every request must carry its own valid session cookie.
  */
-const PREVIEW_SESSION_FALLBACK = process.env.E2B_SANDBOX === "true";
+const PREVIEW_SESSION_FALLBACK =
+  process.env.E2B_SANDBOX === "true" && /@(127\.0\.0\.1|localhost)(:|\/)/.test(process.env.DATABASE_URL ?? "");
 
 export const SESSION_COOKIE = "mf_session";
 export const ADMIN_SESSION_COOKIE = "mf_admin_session";
