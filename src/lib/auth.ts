@@ -8,7 +8,12 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { ensureSeeded } from "@/lib/seed";
 
-process.env.__NEXT_PRIVATE_ORIGIN ??= "http://127.0.0.1:3000";
+// Only default the internal origin to loopback outside production. On Vercel
+// the platform supplies the real origin; forcing localhost there would break
+// server-action redirects.
+if (!process.env.__NEXT_PRIVATE_ORIGIN && process.env.NODE_ENV !== "production") {
+  process.env.__NEXT_PRIVATE_ORIGIN = "http://127.0.0.1:3000";
+}
 
 export const SESSION_COOKIE = "mf_session";
 export const ADMIN_SESSION_COOKIE = "mf_admin_session";

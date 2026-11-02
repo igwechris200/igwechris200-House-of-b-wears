@@ -123,9 +123,26 @@ export async function saveImage(file: File): Promise<UploadResult> {
     };
   }
 
-  // Local disk fallback
-  const uploadDir = path.join(process.cwd(), "uploads");
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, name), buffer);
+  // Local disk fallback (development, or a host with a persistent disk).
+  // On a read-only/ephemeral filesystem this fails with a clear message rather
+  // than a crash, telling the owner to configure Supabase Storage.
+  if (process.env.VERCEL && !supabaseStorageEnabled()) {
+    return {
+      ok: false,
+      error:
+        "Image uploads need Supabase Storage on this host. Add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to your environment variables, or paste an image URL instead of uploading.",
+    };
+  }
+
+  try {
+    const uploadDir = path.join(process.cwd(), "uploads");
+    await mkdir(uploadDir, { recursive: true });
+    await writeFile(path.join(uploadDir, name), buffer);
+  } catch (e) {
+    return {
+      ok: false,
+      error: `Could not write to the server's disk (${e instanceof Error ? e.message : "unknown error"}). Configure Supabase Storage with SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.` ,
+    };
+  }
   return { ok: true, backend: "local", url: `/api/uploads/${name}` };
 }
