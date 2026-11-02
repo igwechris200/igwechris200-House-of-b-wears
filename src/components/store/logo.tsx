@@ -1,50 +1,28 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/brand";
 
 /**
- * Brand wordmark for HOUSE B'WEARS.
- * Renders the uploaded logo when available (light/dark variants), otherwise a
- * distinctive two-line typographic wordmark: small-caps "HOUSE" + big italic serif "B'WEARS".
+ * Store logo lockup. Falls back to the HOUSE OF B'WEARS brand mark when the
+ * owner has not uploaded a custom logo in Store Settings.
  */
-export function Logo({
-  name,
-  logoUrl,
-  logoDarkUrl,
-  dark = false,
-  href = "/",
-  imgClassName = "h-10 w-auto object-contain sm:h-11",
-}: {
-  name: string;
-  logoUrl?: string;
-  logoDarkUrl?: string;
-  dark?: boolean;
-  href?: string;
-  imgClassName?: string;
-}) {
-  const src = dark ? logoDarkUrl || logoUrl : logoUrl;
-  const parts = name.trim().split(/\s+/);
-  // Last word becomes the big serif line, the preceding words the small-caps line
-  // e.g. "HOUSE OF" (small caps) + "B'WEARS" (big italic serif)
-  const first = parts.slice(0, -1).join(" ") || name;
-  const rest = parts[parts.length - 1] || name;
-
-  if (src) {
-    return (
-      <Link href={href} aria-label={`${name} home`} className="inline-flex items-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={name} className={imgClassName} />
-      </Link>
-    );
-  }
-
+export function Logo({ name, logoUrl, dark = false }: { name: string; logoUrl?: string; dark?: boolean }) {
   return (
-    <Link href={href} aria-label={`${name} home`} className="inline-flex items-end gap-1.5 leading-none">
-      <span className={`pb-0.5 text-[9px] font-extrabold uppercase tracking-[0.35em] sm:text-[10px] ${dark ? "text-accent-300" : "text-brand-600"}`}>
-        {first}
-      </span>
-      <span className={`font-serif text-xl font-bold italic tracking-tight sm:text-2xl ${dark ? "text-white" : "text-brand-800"}`}>
-        {rest}
-        <span className="text-accent-500">.</span>
-      </span>
+    <Link href="/" aria-label={`${name} — home`} className="flex items-center">
+      {logoUrl ? (
+        <span className="flex items-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={logoUrl} alt={name} className="h-9 w-auto object-contain sm:h-10" />
+          <span
+            className={`font-display text-lg font-bold tracking-tight sm:text-xl ${
+              dark ? "text-white" : "text-brand-950"
+            }`}
+          >
+            {name}
+          </span>
+        </span>
+      ) : (
+        <BrandMark name={name} size="sm" tone={dark ? "on-dark" : "on-light"} />
+      )}
     </Link>
   );
 }

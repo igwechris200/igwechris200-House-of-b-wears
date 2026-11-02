@@ -67,6 +67,12 @@ body {
   letter-spacing: -0.02em;
 }
 
+/* Brand display face for the HOUSE OF B'WEARS wordmark (Playfair Display) */
+.font-display {
+  font-family: "Playfair Display", "Iowan Old Style", Georgia, serif;
+  font-weight: 700;
+}
+
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 

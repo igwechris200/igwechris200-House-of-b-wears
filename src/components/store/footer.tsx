@@ -4,8 +4,8 @@ import { InstagramIcon as Instagram, FacebookIcon as Facebook, XIcon as Twitter 
 import { getSettings } from "@/lib/settings";
 import { whatsappLink } from "@/lib/utils";
 import { NewsletterForm } from "./newsletter-form";
-import { Logo } from "./logo";
 import { ShareStoreButton } from "./share-buttons";
+import { BrandMark } from "@/components/brand";
 
 export async function Footer() {
   const s = await getSettings();
@@ -25,7 +25,7 @@ export async function Footer() {
       </div>
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <Logo name={s.store_name} logoUrl={s.logo_url} logoDarkUrl={s.logo_dark_url} dark imgClassName="h-12 w-auto object-contain" />
+          <BrandMark name={s.store_name} size="lg" tone="on-dark" className="justify-start" />
           <p className="mt-3 text-sm leading-relaxed text-neutral-400">{s.store_description || s.store_tagline}</p>
           <div className="mt-5 flex items-center gap-3">
             {s.instagram_url && (

@@ -17,7 +17,6 @@ export async function Header() {
     <HeaderClient
       storeName={s.store_name}
       logoUrl={s.logo_url}
-      logoDarkUrl={s.logo_dark_url}
       topMessage={s.announcement}
       user={user ? { name: user.name, role: user.role } : null}
       categories={cats.map((c) => ({ name: c.name, slug: c.slug }))}

@@ -5,6 +5,7 @@ import { listProducts, getAllCategories } from "@/lib/queries";
 import { ProductCard } from "@/components/store/product-card";
 import { ShareButton } from "@/components/store/share-buttons";
 import { HeroCarousel, type HeroSlide } from "@/components/store/hero-carousel";
+import { BrandMark } from "@/components/brand";
 import { CategoryStrip } from "@/components/store/category-strip";
 import { FlashSale } from "@/components/store/flash-sale";
 import { formatNaira, whatsappLink, effectivePrice, discountPercent } from "@/lib/utils";
@@ -102,29 +103,31 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Brand marquee — makes the HOUSE B'WEARS name stand out */}
-      <div className="mt-3 overflow-hidden border-y-2 border-accent-400/60 bg-brand-700 py-2.5" aria-hidden>
-        <div className="flex w-max animate-marquee gap-10 whitespace-nowrap">
-          {Array.from({ length: 2 }).map((_, dup) => (
-            <div key={dup} className="flex gap-10">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <span key={i} className="flex items-center gap-10">
-                  <span className="font-serif text-base font-bold italic tracking-tight text-white sm:text-lg">
-                    {s.store_name}
-                  </span>
-                  <span className="text-accent-400">✦</span>
-                  <span className="text-[11px] font-bold uppercase tracking-[0.35em] text-brand-200 sm:text-xs">Premium menswear</span>
-                  <span className="text-accent-400">✦</span>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Category icons */}
       <section className="mx-auto mt-3 max-w-7xl px-3 sm:mt-4 sm:px-6">
         <CategoryStrip categories={cats.map((c) => ({ id: c.id, name: c.name, slug: c.slug, image: c.image }))} />
+      </section>
+
+      {/* Brand statement */}
+      <section className="relative mt-6 overflow-hidden bg-ink text-white">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          style={{ backgroundImage: "repeating-linear-gradient(45deg, #ffc90f 0 2px, transparent 2px 16px)" }}
+        />
+        <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-5 px-4 py-14 text-center sm:py-16">
+          <BrandMark name={s.store_name} size="lg" tone="on-dark" />
+          <p className="max-w-xl text-sm leading-relaxed text-neutral-400 sm:text-base">{s.store_tagline}</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link href="/shop" className="btn-gold">Shop the collection</Link>
+            <ShareButton
+              title={s.store_name}
+              text={`Check out ${s.store_name} — premium men's fashion delivered across Nigeria.`}
+              path="/"
+              image="/images/hero.jpg"
+              label="Share store"
+            />
+          </div>
+        </div>
       </section>
 
       {/* Trust strip */}

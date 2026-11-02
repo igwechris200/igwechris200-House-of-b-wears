@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { getAdminUser, getCurrentUser, verifyPassword } from "@/lib/auth";
 import { getSettings } from "@/lib/settings";
 import { AuthForm } from "@/app/(store)/(auth)/auth-form";
-import { Logo } from "@/components/store/logo";
+import { BrandMark } from "@/components/brand";
 
 export const metadata = { title: "Admin sign in" };
 export const dynamic = "force-dynamic";
@@ -33,15 +33,15 @@ export default async function AdminLoginPage({
   return (
     <div className="flex min-h-screen items-center justify-center bg-ink px-4 py-12 text-white">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <span className="rounded-2xl bg-white/5 p-3 ring-1 ring-white/10">
-            <Logo name={s.store_name} logoUrl={s.logo_url} logoDarkUrl={s.logo_dark_url} dark imgClassName="h-14 w-auto object-contain" />
+        <div className="flex items-center gap-4">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
+            <ShieldCheck className="h-5 w-5 text-accent-300" />
           </span>
           <div>
-            <p className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-brand-300">
-              <ShieldCheck className="h-3.5 w-3.5" /> Secure admin area
-            </p>
-            <h1 className="mt-1 font-serif text-2xl">Store Owner Sign In</h1>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-accent-400">Secure area</p>
+            <h1 className="sr-only">{s.store_name} Admin</h1>
+            <BrandMark name={s.store_name} size="sm" tone="on-dark" showBadge={false} className="-ml-0.5" />
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-neutral-400">Admin dashboard</p>
           </div>
         </div>
 

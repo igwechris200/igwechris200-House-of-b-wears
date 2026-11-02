@@ -8,13 +8,21 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { ensureSeeded } from "@/lib/seed";
 
-if (process.env.E2B_SANDBOX === "true") process.env.__NEXT_PRIVATE_ORIGIN ??= "http://127.0.0.1:3000";
+// Internal origin for server-side fetches: loopback in local development and in the
+// sandbox preview (whose public hostname can't be reached from inside the container).
+// Never overridden on Vercel or any real production host.
+if (
+  process.env.E2B_SANDBOX === "true" ||
+  (!process.env.__NEXT_PRIVATE_ORIGIN && process.env.NODE_ENV !== "production")
+) {
+  process.env.__NEXT_PRIVATE_ORIGIN = "http://127.0.0.1:3000";
+}
 
 /**
- * The hosted preview runs inside a cross-site iframe where browsers often block
- * cookies. Only there do we allow the cookie-less session fallbacks below.
- * On a real deployment (Vercel, Render, VPS…) E2B_SANDBOX is unset, so these
- * fallbacks are OFF and every request must carry its own valid session cookie.
+ * The hosted sandbox preview runs inside a cross-site iframe where browsers often
+ * block cookies. Only there, and only while it uses its own local database, is the
+ * cookie-less session fallback switched on automatically. It is always off on
+ * Vercel and whenever the database is Supabase.
  */
 const PREVIEW_SESSION_FALLBACK =
   process.env.E2B_SANDBOX === "true" && /@(127\.0\.0\.1|localhost)(:|\/)/.test(process.env.DATABASE_URL ?? "");
@@ -22,6 +30,19 @@ const PREVIEW_SESSION_FALLBACK =
 export const SESSION_COOKIE = "mf_session";
 export const ADMIN_SESSION_COOKIE = "mf_admin_session";
 const SESSION_DAYS = 30;
+
+/**
+ * Development-only escape hatch for cookie-less preview iframes.
+ *
+ * When false (the default), a request with no valid session cookie is treated
+ * as signed out — which is correct for production. When explicitly set to "1",
+ * the last active session is used as a fallback so the admin dashboard can be
+ * previewed inside a cross-site iframe that blocks cookies.
+ *
+ * Never set this to 1 in production: it would let any visitor without a cookie
+ * be treated as an administrator.
+ */
+const COOKIELESS_SESSION_FALLBACK = process.env.ALLOW_COOKIELESS_ADMIN === "1" || PREVIEW_SESSION_FALLBACK;
 
 export function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
@@ -90,7 +111,9 @@ export async function destroySession() {
   const adminId = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
   if (id) await db.delete(sessions).where(eq(sessions.id, id));
   if (adminId) await db.delete(sessions).where(eq(sessions.id, adminId));
-  if (PREVIEW_SESSION_FALLBACK) await db.delete(sessions);
+  // Only in cookie-less preview mode: there, sessions aren't tied to a browser, so
+  // signing out must clear them all. In production this would sign out every user.
+  if (COOKIELESS_SESSION_FALLBACK) await db.delete(sessions);
   await db
     .insert(settings)
     .values({ key: "admin_logged_out", value: "true" })
@@ -143,15 +166,20 @@ export const getCurrentUser = cache(async (): Promise<SafeUser | null> => {
       if (rows[0]) return rows[0];
     }
 
-    if (!PREVIEW_SESSION_FALLBACK) return null;
-    const fallbackRows = await db
-      .select(userSelect)
-      .from(sessions)
-      .innerJoin(users, eq(sessions.userId, users.id))
-      .where(gt(sessions.expiresAt, new Date()))
-      .orderBy(desc(sessions.createdAt))
-      .limit(1);
-    return fallbackRows[0] ?? null;
+    // Session-less fallback is a development aid for cross-site preview iframes
+    // that block cookies. It must NEVER be enabled in production, because it
+    // would let a visitor without a cookie be treated as the most recent user.
+    if (COOKIELESS_SESSION_FALLBACK) {
+      const fallbackRows = await db
+        .select(userSelect)
+        .from(sessions)
+        .innerJoin(users, eq(sessions.userId, users.id))
+        .where(gt(sessions.expiresAt, new Date()))
+        .orderBy(desc(sessions.createdAt))
+        .limit(1);
+      return fallbackRows[0] ?? null;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -188,31 +216,34 @@ export const getAdminUser = cache(async (): Promise<SafeUser | null> => {
       }
     }
 
-    if (!PREVIEW_SESSION_FALLBACK) return null;
+    // Steps 3 and 4 are development-only fallbacks for cross-site preview
+    // iframes that block cookies. In production (fallback disabled) a request
+    // without a valid admin session cookie is simply not an administrator.
+    if (COOKIELESS_SESSION_FALLBACK) {
+      // Reuse the most recent active admin session, if one exists
+      const fallbackAdmin = await db
+        .select(userSelect)
+        .from(sessions)
+        .innerJoin(users, eq(sessions.userId, users.id))
+        .where(and(eq(users.role, "admin"), gt(sessions.expiresAt, new Date())))
+        .orderBy(desc(sessions.createdAt))
+        .limit(1);
+      if (fallbackAdmin[0]) return fallbackAdmin[0];
 
-    // 3. Preview-only fallback for the cross-site iframe (when cookies are stripped or stale)
-    const fallbackAdmin = await db
-      .select(userSelect)
-      .from(sessions)
-      .innerJoin(users, eq(sessions.userId, users.id))
-      .where(and(eq(users.role, "admin"), gt(sessions.expiresAt, new Date())))
-      .orderBy(desc(sessions.createdAt))
-      .limit(1);
-    if (fallbackAdmin[0]) return fallbackAdmin[0];
-
-    // 4. If no admin session row exists yet and admin hasn't explicitly logged out, restore admin session
-    const [loggedOutFlag] = await db
-      .select()
-      .from(settings)
-      .where(eq(settings.key, "admin_logged_out"))
-      .limit(1);
-    if (loggedOutFlag?.value !== "true") {
-      const [adminRow] = await db.select(userSelect).from(users).where(eq(users.role, "admin")).limit(1);
-      if (adminRow) {
-        const id = randomBytes(32).toString("hex");
-        const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-        await db.insert(sessions).values({ id, userId: adminRow.id, expiresAt });
-        return adminRow;
+      // Otherwise create one, unless the admin has signed out on purpose
+      const [loggedOutFlag] = await db
+        .select()
+        .from(settings)
+        .where(eq(settings.key, "admin_logged_out"))
+        .limit(1);
+      if (loggedOutFlag?.value !== "true") {
+        const [adminRow] = await db.select(userSelect).from(users).where(eq(users.role, "admin")).limit(1);
+        if (adminRow) {
+          const id = randomBytes(32).toString("hex");
+          const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
+          await db.insert(sessions).values({ id, userId: adminRow.id, expiresAt });
+          return adminRow;
+        }
       }
     }
 

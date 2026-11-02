@@ -1,8 +1,89 @@
-# Men's Fashion Online Store — Nigeria
+# HOUSE OF B'WEARS — Men's Fashion Online Store (Nigeria)
 
 A full e-commerce platform for a men's clothing business: customer storefront, Paystack payments,
 and a secure admin dashboard. Built with **Next.js (App Router)**, **PostgreSQL + Drizzle ORM**,
 and **Tailwind CSS**. Business name, logo and contact details are editable from the dashboard.
+
+---
+
+## Push this project to your GitHub repository
+
+The repo has already been prepared — a `.gitignore` is in place and `.env` (which holds your
+database credentials) is **excluded from version control**, so no secrets get committed.
+
+### This project's repository
+
+```bash
+node scripts/push-to-github.mjs https://github.com/igwechris200/igwechris200-House-of-b-wears.git
+```
+
+Cloning it back down:
+
+```bash
+git clone https://github.com/igwechris200/igwechris200-House-of-b-wears.git
+cd igwechris200-House-of-b-wears
+cp .env.example .env   # then fill in your own values
+npm ci
+npx drizzle-kit push
+npm run build && npm start
+```
+
+Where the remote already had commits, the original history is preserved and this project's files
+win wherever the same file conflicted.
+
+### If you are starting from a brand-new empty repository
+
+```bash
+git remote add origin https://github.com/<your-username>/<your-repo>.git
+git branch -M main
+git push -u origin main
+```
+
+If your account requires a personal access token instead of a password, GitHub prompts for it —
+paste the token as the password. After the first push, later changes are just:
+
+```bash
+git add -A
+git commit -m "Describe what changed"
+git push
+```
+
+### What is committed vs. ignored
+
+| Committed | Ignored (never uploaded) |
+|---|---|
+| All source in `src/`, `scripts/`, `supabase/`, `public/` | `.env` — your real credentials |
+| `.env.example` — a template listing every variable you need | `node_modules/` (710 MB, reinstalled with `npm ci`) |
+| `.github/workflows/ci.yml` — automated checks | `.next/` build output |
+| `README.md`, `drizzle.config.json`, `package.json` | `uploads/` runtime images, `*.log` |
+
+Anyone who clones the repo copies `.env.example` to `.env` and fills in their own values.
+
+### Continuous integration
+
+Every push to `main` and every pull request automatically runs `.github/workflows/ci.yml`, which
+starts a real PostgreSQL 15 service, applies the schema, then runs `next typegen`, the TypeScript
+check, the production build, the 83-check admin business-logic test suite, and lint. If any of
+those fail, the check shows red on GitHub — you'll catch breakage before it reaches customers.
+
+---
+
+## Deploying
+
+The app is a standard Next.js server-rendered project, so it needs a Node host
+(**not** a static host), plus a PostgreSQL database.
+
+1. Provision PostgreSQL (Supabase, Neon, Railway, or your own server) and copy the connection string.
+2. On your host, set the environment variables from `.env.example`:
+   `DATABASE_URL`, `PAYSTACK_SECRET_KEY`, `NEXT_PUBLIC_SITE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
+3. Apply the schema once: `npx drizzle-kit push`.
+4. Build and start: `npm run build && npm start`.
+5. Register the Paystack webhook: `https://<your-domain>/api/paystack/webhook`.
+
+> **Uploaded images** are written to `./uploads` on the server's disk. On platforms with an
+> ephemeral filesystem (Vercel, Heroku free tier) those files are lost on redeploy — either use a
+> host with a persistent disk, or paste image URLs instead of uploading in the product form.
+> Migrating `src/app/api/upload/route.ts` to Supabase Storage or S3 removes that limitation.
 
 ---
 
@@ -79,7 +160,7 @@ The password must be at least 10 characters. This signs out all active sessions 
 The database is seeded on first request with the 13 default categories, sample products, and the
 `WELCOME10` and `NAIJA5K` discount codes.
 
-### Supabase (database, RLS)
+### Supabase (database, storage, RLS)
 
 The repository is ready for the **Supabase GitHub integration**:
 
@@ -110,6 +191,20 @@ The Row Level Security migration:
 
 The server connects with `DATABASE_URL` (a privileged role that bypasses RLS) and enforces admin
 checks in code. Do not put the service-role key or database password in any `NEXT_PUBLIC_*` variable.
+
+**3. Image storage (recommended for production).** Uploaded product photos are stored on the
+server's local disk by default, which is lost on redeploy. To store them permanently in Supabase
+Storage, set these in `.env`:
+
+```
+SUPABASE_URL=https://<your-project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<from Project Settings → API>
+SUPABASE_STORAGE_BUCKET=product-images
+```
+
+The bucket is created automatically on the first upload if it does not exist, and images are then
+served from Supabase's CDN. The service role key is read only on the server and never sent to the
+browser. Store Settings shows which storage backend is currently active.
 
 > **Supabase Auth status:** the admin and customer sign-in in this build uses the app's own
 > hashed-password sessions (httpOnly cookie, role check on every request). Switching sign-in to
@@ -154,7 +249,7 @@ npm run dev                 # http://localhost:3000
 
 On first start, the app seeds the default categories and sample products, and creates the admin account from `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
 
-> `drizzle.config.json` currently points at the local database URL. If you use a hosted database, update `dbCredentials.url` there (or run `drizzle-kit push` with that config pointing at your `DATABASE_URL`).
+> `drizzle.config.ts` reads `DATABASE_URL` from `.env`. Use `drizzle-kit push` only for a local or brand-new database, never against your live Supabase database (see below).
 
 ## Deploying to Vercel (with your Supabase database)
 
@@ -171,6 +266,7 @@ Vercel just runs the website and connects to it.
    | `NEXT_PUBLIC_SITE_URL` | For payments | Your live address, e.g. `https://house-of-bwears.vercel.app` |
    | `PAYSTACK_SECRET_KEY` | For payments | Paystack secret key (server only) |
    | `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | Optional | Paystack public key |
+   | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | For photo uploads | Supabase → Project Settings → API. The service role key is secret, never put it in a `NEXT_PUBLIC_*` variable |
    | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | No | Only used if no admin exists. Your Supabase database already has one |
 
    If your password has special characters such as `@`, `#` or `%`, they must be URL-encoded in
@@ -183,7 +279,7 @@ Do **not** run `npx drizzle-kit push` against Supabase: the tables and access ru
 `supabase/migrations/`, and a push could undo the Row Level Security settings.
 
 ### Important: product image uploads
-Admin-uploaded images are saved to the local `uploads/` folder. That works on a VPS or a host with a persistent disk. **On Vercel the disk is read-only**, so the upload box shows a message asking for an image link instead. Pasting image URLs in the product and category forms works everywhere. To upload from your phone or computer on Vercel, the next step is connecting Supabase Storage (needs your Supabase project URL and service key).
+With `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set, uploaded photos are stored in Supabase Storage (bucket `product-images`, created automatically) and survive redeploys. Without them, photos are saved to the local `uploads/` folder, which works on a VPS but **not on Vercel**: there the upload box asks for an image link instead. Pasting image URLs in the product and category forms works everywhere.
 
 ### Preview-only session fallback
-`src/lib/auth.ts` has a cookie-less session fallback that is **only** enabled inside the hosted preview sandbox (`E2B_SANDBOX=true`) **and** only while it uses its own local database. It is always off on Vercel and whenever the database is Supabase, so every request on your real site must carry its own valid session cookie.
+`src/lib/auth.ts` has a cookie-less session fallback for previewing the admin dashboard inside an iframe that blocks cookies. It is switched on only by `ALLOW_COOKIELESS_ADMIN=1`, or automatically inside the hosted preview sandbox while it uses its own local database. **Never set `ALLOW_COOKIELESS_ADMIN` on Vercel**: it would let any visitor into the admin dashboard. With it off, every request must carry its own valid session cookie, and signing out only signs out that browser.

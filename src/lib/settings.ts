@@ -5,11 +5,10 @@ import { cache } from "react";
 import { ensureSeeded } from "@/lib/seed";
 
 export const DEFAULT_SETTINGS: Record<string, string> = {
-  store_name: "Noir & Gold Menswear",
-  store_tagline: "Premium men's fashion, delivered across Nigeria.",
+  store_name: "HOUSE OF B'WEARS",
+  store_tagline: "Quality menswear for the modern Nigerian man.",
   store_description: "Premium jeans, senator wear, sneakers and everyday essentials, curated for the modern Nigerian gentleman and delivered nationwide.",
-  logo_url: "/images/logo.svg",
-  logo_dark_url: "/images/logo-light.svg",
+  logo_url: "",
   contact_email: "hello@noirgold.ng",
   contact_phone: "+234 801 234 5678",
   whatsapp_number: "2348012345678",
@@ -24,7 +23,7 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   paystack_enabled: "true",
   bank_transfer_enabled: "true",
   bank_name: "GTBank",
-  bank_account_name: "Noir & Gold Menswear",
+  bank_account_name: "HOUSE OF B'WEARS",
   bank_account_number: "0123456789",
   announcement: "Free delivery on orders above ₦150,000 · Pay securely with Paystack",
   low_stock_threshold: "5",

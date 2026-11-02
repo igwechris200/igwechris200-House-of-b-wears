@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Logo } from "@/components/store/logo";
 import {
   LayoutDashboard,
   Package,
@@ -21,20 +20,20 @@ import {
   Store,
   type LucideIcon,
 } from "lucide-react";
+import { BrandBadge } from "@/components/brand";
 
 type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean; badge?: number; tone?: "gold" | "red" };
 
 type Props = {
   storeName: string;
   logoUrl: string;
-  logoDarkUrl?: string;
   adminName: string;
   adminEmail: string;
   pendingOrders: number;
   lowStock: number;
 };
 
-export function AdminSidebar({ storeName, logoUrl, logoDarkUrl, adminName, adminEmail, pendingOrders, lowStock }: Props) {
+export function AdminSidebar({ storeName, logoUrl, adminName, adminEmail, pendingOrders, lowStock }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -60,7 +59,16 @@ export function AdminSidebar({ storeName, logoUrl, logoDarkUrl, adminName, admin
 
   const brand = (
     <a href="/admin" className="flex items-center gap-3">
-      <Logo name={storeName} logoUrl={logoUrl} logoDarkUrl={logoDarkUrl} dark imgClassName="h-11 w-auto object-contain" />
+      {logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logoUrl} alt="" className="h-10 w-10 rounded-xl bg-white object-contain p-1" />
+      ) : (
+        <BrandBadge size="sm" />
+      )}
+      <span className="min-w-0">
+        <span className="block truncate font-display text-base font-bold leading-tight text-white">{storeName}</span>
+        <span className="block text-[9px] font-semibold uppercase tracking-[0.3em] text-accent-400">Admin</span>
+      </span>
     </a>
   );
 
@@ -71,8 +79,9 @@ export function AdminSidebar({ storeName, logoUrl, logoDarkUrl, adminName, admin
         <button onClick={() => setOpen(true)} className="rounded-xl border border-neutral-200 p-2 hover:bg-neutral-50" aria-label="Open menu">
           <Menu className="h-5 w-5" />
         </button>
-        <a href="/admin" className="font-serif text-base">
-          {storeName} <span className="text-xs font-sans font-semibold text-brand-600">Admin</span>
+        <a href="/admin" className="flex items-center gap-2">
+          <BrandBadge size="sm" className="!h-8 !w-8" />
+          <span className="font-display text-base font-bold">{storeName}</span>
         </a>
         <a href="/" className="relative rounded-xl border border-neutral-200 p-2 hover:bg-neutral-50" aria-label="View storefront">
           {(pendingOrders > 0 || lowStock > 0) && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white" />}

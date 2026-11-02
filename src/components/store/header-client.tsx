@@ -22,7 +22,6 @@ import { Logo } from "./logo";
 type Props = {
   storeName: string;
   logoUrl: string;
-  logoDarkUrl?: string;
   topMessage: string;
   user: { name: string; role: string } | null;
   categories: { name: string; slug: string }[];
@@ -35,7 +34,7 @@ const NAV = [
   { label: "Native Wear", href: "/shop?category=native-wear" },
 ];
 
-export function HeaderClient({ storeName, logoUrl, logoDarkUrl, topMessage, user, categories }: Props) {
+export function HeaderClient({ storeName, logoUrl, topMessage, user, categories }: Props) {
   const { count, wishlist, hydrated } = useCart();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -135,7 +134,7 @@ export function HeaderClient({ storeName, logoUrl, logoDarkUrl, topMessage, user
             </button>
 
             <div className="shrink-0">
-              <Logo name={storeName} logoUrl={logoUrl} logoDarkUrl={logoDarkUrl} dark imgClassName="h-10 w-auto object-contain sm:h-11" />
+              <Logo name={storeName} logoUrl={logoUrl} dark />
             </div>
 
             <div className="hidden min-w-0 flex-1 lg:block">{searchInput}</div>
@@ -209,7 +208,7 @@ export function HeaderClient({ storeName, logoUrl, logoDarkUrl, topMessage, user
         }`}
       >
         <div className="flex items-center justify-between bg-brand-500 p-4">
-          <Logo name={storeName} logoUrl={logoUrl} logoDarkUrl={logoDarkUrl} dark imgClassName="h-10 w-auto object-contain sm:h-11" />
+          <Logo name={storeName} logoUrl={logoUrl} dark />
           <button onClick={() => setOpen(false)} className="rounded-full p-2 text-white hover:bg-white/10" aria-label="Close">
             <X className="h-6 w-6" />
           </button>

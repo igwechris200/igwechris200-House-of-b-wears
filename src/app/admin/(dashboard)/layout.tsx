@@ -31,7 +31,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <AdminSidebar
         storeName={s.store_name}
         logoUrl={s.logo_url}
-        logoDarkUrl={s.logo_dark_url}
         adminName={admin.name}
         adminEmail={admin.email}
         pendingOrders={pending[0]?.c ?? 0}
